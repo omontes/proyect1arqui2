@@ -18,14 +18,64 @@ using namespace std;
 /*
  * 
  */
-int calcularMapeoInversoX(int i, int j){
-    double A = 2.1*i-2.1*j;
-    double B = 2.1*i+2.1*j;
-    double D = 0.003*i+1;
-    double E = 0.003*j+1;
-    double C = pow((0.003*i+1),2)+pow((0.003*j+1),2);
-    return (A*D+B*E)/C;
-  
+void smoothing(int i, int j, RGBQUAD* color, FIBITMAP* bitmap) {
+
+    RGBQUAD color1;
+    FreeImage_GetPixelColor(bitmap, i + 1, j, &color1);
+
+    RGBQUAD color2;
+    FreeImage_GetPixelColor(bitmap, i - 1, j, &color2);
+
+    RGBQUAD color3;
+    FreeImage_GetPixelColor(bitmap, i, j + 1, &color3);
+
+    RGBQUAD color4;
+    FreeImage_GetPixelColor(bitmap, i, j - 1, &color4);
+    
+    RGBQUAD color5;
+    FreeImage_GetPixelColor(bitmap, i+1, j + 1, &color5);
+    
+    RGBQUAD color6;
+    FreeImage_GetPixelColor(bitmap, i-1, j + 1, &color6);
+    
+    RGBQUAD color7;
+    FreeImage_GetPixelColor(bitmap, i-1, j - 1, &color7);
+    
+    RGBQUAD color8;
+    FreeImage_GetPixelColor(bitmap, i+1, j - 1, &color8);
+
+    int red = color1.rgbRed + color2.rgbRed + color3.rgbRed + color4.rgbRed +
+    color5.rgbRed + color6.rgbRed + color7.rgbRed + color8.rgbRed;
+    int green = color1.rgbGreen + color2.rgbGreen + color3.rgbGreen +
+    color4.rgbGreen + color5.rgbGreen+ color6.rgbGreen + color7.rgbGreen + color8.rgbGreen;
+    int blue = color1.rgbBlue + color2.rgbBlue + color3.rgbBlue + color4.rgbBlue
+    + color5.rgbBlue + color6.rgbBlue + color7.rgbBlue + color8.rgbBlue;
+
+    color->rgbGreen = green / 8;
+    color->rgbBlue = blue / 8;
+    color->rgbRed = red / 8;
+
+}
+int calcularMapeoInversoY(int i, int j) {
+    double A = i - j;
+    double B = i + j;
+    double D = 2.1 - 0.003 * i;
+    double E = 2.1 - 0.003 * j;
+    double divisor = pow(D, 2) + pow(E, 2);
+    return ((B * D)-(A * E)) / divisor;
+
+
+}
+
+int calcularMapeoInversoX(int i, int j) {
+    double A = i - j;
+    double B = i + j;
+    double D = 2.1 - 0.003 * i;
+    double E = 2.1 - 0.003 * j;
+    double divisor = pow(D, 2) + pow(E, 2);
+    return ((A * D)+(B * E)) / divisor;
+    
+
 
 }
 int calcularMapeoX(int i, int j){
@@ -116,15 +166,9 @@ int main(int argc, char** argv) {
  
     for (int i = 0; i < width; i++) {
         for (int j = 0; j < height; j++) {
-            // draw a blue pixel at (i, j)
-            // x parte real y y parte imaginaria
-            double A = i-(height-j);
-            double B = i+(height-j);
-            double D = 2.1-0.003*i;
-            double E = 2.1-0.003*(height-j);
-            double divisor = pow(D,2)+pow(E,2);
-            int inew_bitmap= ((A*D)+(B*E))/divisor;
-            int jnew_bitmap= ((B*D)-(A*E))/divisor;
+            
+            int inew_bitmap= calcularMapeoInversoX(i,(height-j));
+            int jnew_bitmap= calcularMapeoInversoY(i,(height-j));
             
             /*Sacar el mapeo de inverso*/
             
@@ -135,6 +179,14 @@ int main(int argc, char** argv) {
             RGBQUAD color;
             FreeImage_GetPixelColor(bitmap,inew_bitmap,(height-jnew_bitmap),&color);
             FreeImage_SetPixelColor(new_bitmap, i, j, &color);}
+        }
+    }
+    /*Proceso de suavizacion*/
+    for (int i = 0; i < width; i++) {
+        for (int j = 0; j < height; j++) {
+            RGBQUAD color;
+            smoothing(i, j, &color, new_bitmap);
+            FreeImage_SetPixelColor(new_bitmap, i, j, &color);
         }
     }
 
