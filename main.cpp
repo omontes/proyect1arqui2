@@ -18,6 +18,16 @@ using namespace std;
 /*
  * 
  */
+int calcularMapeoInversoX(int i, int j){
+    double A = 2.1*i-2.1*j;
+    double B = 2.1*i+2.1*j;
+    double D = 0.003*i+1;
+    double E = 0.003*j+1;
+    double C = pow((0.003*i+1),2)+pow((0.003*j+1),2);
+    return (A*D+B*E)/C;
+  
+
+}
 int calcularMapeoX(int i, int j){
     double A = 2.1*i-2.1*j;
     double B = 2.1*i+2.1*j;
@@ -49,8 +59,8 @@ int main(int argc, char** argv) {
     int width;
     int height;
 
-    FREE_IMAGE_FORMAT formato = FreeImage_GetFileType("sample2.png", 0);
-    FIBITMAP* bitmap = FreeImage_Load(formato, "sample2.png");
+    FREE_IMAGE_FORMAT formato = FreeImage_GetFileType("sample3.png", 0);
+    FIBITMAP* bitmap = FreeImage_Load(formato, "sample3.png");
     
    
     
