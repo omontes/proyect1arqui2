@@ -18,6 +18,25 @@ using namespace std;
 /*
  * 
  */
+int calcularMapeoX(int i, int j){
+    double A = 2.1*i-2.1*j;
+    double B = 2.1*i+2.1*j;
+    double D = 0.003*i+1;
+    double E = 0.003*j+1;
+    double C = pow((0.003*i+1),2)+pow((0.003*j+1),2);
+    return (A*D+B*E)/C;
+  
+
+}
+int calcularMapeoY(int i, int j){
+    double A = 2.1*i-2.1*j;
+    double B = 2.1*i+2.1*j;
+    double D = 0.003*i+1;
+    double E = 0.003*j+1;
+    double C = pow((0.003*i+1),2)+pow((0.003*j+1),2);
+    return (-A*E+B*D)/C;
+
+}
 int main(int argc, char** argv) {
 
     FreeImage_Initialise();
@@ -30,8 +49,8 @@ int main(int argc, char** argv) {
     int width;
     int height;
 
-    FREE_IMAGE_FORMAT formato = FreeImage_GetFileType("sample.png", 0);
-    FIBITMAP* bitmap = FreeImage_Load(formato, "sample.png");
+    FREE_IMAGE_FORMAT formato = FreeImage_GetFileType("sample2.png", 0);
+    FIBITMAP* bitmap = FreeImage_Load(formato, "sample2.png");
     
    
     
@@ -40,7 +59,7 @@ int main(int argc, char** argv) {
     
     width = FreeImage_GetWidth(temp);
     height = FreeImage_GetHeight(temp);
-    FIBITMAP * new_bitmap = FreeImage_Allocate(width, height, BPP); 
+    
     
     FreeImage_Unload(bitmap);
     bitmap = temp;
@@ -53,6 +72,34 @@ int main(int argc, char** argv) {
     /*
      * Mapea 0, tmaano en x j y lo mapea y luego mapea oarte ral en 
      */
+    int x1 =calcularMapeoX(0,0);
+    int y1 =calcularMapeoY(0,0);
+    
+    int x2 =calcularMapeoX(width,0);
+    int y2 =calcularMapeoY(width,0);
+    
+    int x3 =calcularMapeoX(0,height);
+    int y3 =calcularMapeoY(0,height);
+    
+    int x4 =calcularMapeoX(width,height);
+    int y4 =calcularMapeoY(width,height);
+    
+    cout << "x1: " << x1 << "\n";
+    cout << "y1: " << y1 << "\n";
+    
+    cout << "x2: " << x2 << "\n";
+    cout << "y2: " << y2 << "\n";
+    
+    cout << "x3: " << x3 << "\n";
+    cout << "y3: " << y3 << "\n";
+    
+    cout << "x4: " << x4 << "\n";
+    cout << "y4: " << y4 << "\n";
+    
+    width=x2;
+    height=y3;
+    
+    FIBITMAP * new_bitmap = FreeImage_Allocate(width, height, BPP); 
     /*El tamano de la imagen
     Despues probar las 4 esquinas, mapeo normal y 
     entonces saca cual es el valor en la otra imagen, define el bitmap del tamano resultato.*/
