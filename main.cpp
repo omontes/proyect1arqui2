@@ -9,6 +9,9 @@
 #include <cstdlib>
 #include <iostream>
 #include <cmath>
+#include <omp.h>
+#include <time.h>
+#include <sys/time.h>
 using namespace std;
 
 #define WIDTH 512
@@ -109,8 +112,8 @@ int main(int argc, char** argv) {
     int width;
     int height;
 
-    FREE_IMAGE_FORMAT formato = FreeImage_GetFileType("sample3.png", 0);
-    FIBITMAP* bitmap = FreeImage_Load(formato, "sample3.png");
+    FREE_IMAGE_FORMAT formato = FreeImage_GetFileType("sample.png", 0);
+    FIBITMAP* bitmap = FreeImage_Load(formato, "sample.png");
     
    
     
@@ -156,31 +159,42 @@ int main(int argc, char** argv) {
     cout << "x4: " << x4 << "\n";
     cout << "y4: " << y4 << "\n";
     
-    width=x2;
-    height=y3;
+    //width=x2;
+    //height=y3;
     
     FIBITMAP * new_bitmap = FreeImage_Allocate(width, height, BPP); 
     /*El tamano de la imagen
     Despues probar las 4 esquinas, mapeo normal y 
     entonces saca cual es el valor en la otra imagen, define el bitmap del tamano resultato.*/
  
-    for (int i = 0; i < width; i++) {
-        for (int j = 0; j < height; j++) {
-            
-            int inew_bitmap= calcularMapeoInversoX(i,(height-j));
-            int jnew_bitmap= calcularMapeoInversoY(i,(height-j));
+    double seconds;
+    struct timeval start, end;
+    gettimeofday( &start, NULL );
+    #pragma omp simd
+    for (int x = 0; x < width; x++) {
+        for (int y = 0; y < height; y++) {
+                       
+            int inew_bitmap= calcularMapeoInversoX(x,(height-y));
+            int jnew_bitmap= calcularMapeoInversoY(x,(height-y));
             
             /*Sacar el mapeo de inverso*/
             
             if(inew_bitmap<0 | jnew_bitmap<0 | jnew_bitmap>height | inew_bitmap>width ){
-                FreeImage_SetPixelColor(new_bitmap, i, j, &negro);
+                FreeImage_SetPixelColor(new_bitmap, x, y, &negro);
             }
             else{
             RGBQUAD color;
             FreeImage_GetPixelColor(bitmap,inew_bitmap,(height-jnew_bitmap),&color);
-            FreeImage_SetPixelColor(new_bitmap, i, j, &color);}
+            FreeImage_SetPixelColor(new_bitmap, x, y, &color);}
         }
     }
+     gettimeofday( &end, NULL );
+     seconds = (end.tv_sec - start.tv_sec) + 1.0e-6 * (end.tv_usec - start.tv_usec);
+     cout << "El mapeo duro en segundos: " << seconds << "\n";
+     
+    
+    
+    
     /*Proceso de suavizacion*/
     for (int i = 0; i < width; i++) {
         for (int j = 0; j < height; j++) {
