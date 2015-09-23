@@ -18,47 +18,79 @@ using namespace std;
 #define HEIGHT 512
 #define BPP 32 //Bits per pixel 
 
+
+int Width; 
+int Height;
+
+int esNegro(RGBQUAD* color){
+    if(color->rgbBlue == 0 && color->rgbGreen == 0 && color->rgbRed == 0){
+        return 0;
+    }
+    else return 1;
+}
+
+
+
 /*
  * 
  */
-void smoothing(int i, int j, RGBQUAD* color, FIBITMAP* bitmap) {
-
+int smoothing(int i, int j, RGBQUAD* color, FIBITMAP* bitmap) {
+    
     RGBQUAD color1;
     FreeImage_GetPixelColor(bitmap, i + 1, j, &color1);
-
+    if(esNegro(&color1)==0) return 0;
+    if(i+1<0 | j<0 | j>Height | i+1>Width )
+        return 0;
+           
     RGBQUAD color2;
     FreeImage_GetPixelColor(bitmap, i - 1, j, &color2);
+    if(esNegro(&color2)==0) return 0;
+     if(i-1<0 | j<0 | j>Height | i-1>Width )
+        return 0;
 
     RGBQUAD color3;
     FreeImage_GetPixelColor(bitmap, i, j + 1, &color3);
+    if(esNegro(&color3)==0) return 0;
+     if(i+1<0 | j+1<0 | j+1>Height | i>Width )
+        return 0;
 
     RGBQUAD color4;
     FreeImage_GetPixelColor(bitmap, i, j - 1, &color4);
-    
-    RGBQUAD color5;
+    if(esNegro(&color4)==0) return 0;
+     if(i+1<0 | j-1<0 | j-1>Height | i>Width )
+        return 0;
+
+   /* RGBQUAD color5;
     FreeImage_GetPixelColor(bitmap, i+1, j + 1, &color5);
-    
+    if(esNegro(&color5)==0) return 0;
+
     RGBQUAD color6;
     FreeImage_GetPixelColor(bitmap, i-1, j + 1, &color6);
-    
+    if(esNegro(&color6)==0) return 0;
+
     RGBQUAD color7;
     FreeImage_GetPixelColor(bitmap, i-1, j - 1, &color7);
-    
+    if(esNegro(&color7)==0) return 0;
+
     RGBQUAD color8;
     FreeImage_GetPixelColor(bitmap, i+1, j - 1, &color8);
+    if(esNegro(&color8)==0) return 0;*/
 
-    int red = color1.rgbRed + color2.rgbRed + color3.rgbRed + color4.rgbRed +
-    color5.rgbRed + color6.rgbRed + color7.rgbRed + color8.rgbRed;
+    int red = color1.rgbRed + color2.rgbRed + color3.rgbRed + color4.rgbRed ;
+   // color5.rgbRed + color6.rgbRed + color7.rgbRed + color8.rgbRed;
     int green = color1.rgbGreen + color2.rgbGreen + color3.rgbGreen +
-    color4.rgbGreen + color5.rgbGreen+ color6.rgbGreen + color7.rgbGreen + color8.rgbGreen;
-    int blue = color1.rgbBlue + color2.rgbBlue + color3.rgbBlue + color4.rgbBlue
-    + color5.rgbBlue + color6.rgbBlue + color7.rgbBlue + color8.rgbBlue;
+    color4.rgbGreen;// + color5.rgbGreen+ color6.rgbGreen + color7.rgbGreen + color8.rgbGreen;
+    int blue = color1.rgbBlue + color2.rgbBlue + color3.rgbBlue + color4.rgbBlue;
+    //+ color5.rgbBlue + color6.rgbBlue + color7.rgbBlue + color8.rgbBlue;
 
-    color->rgbGreen = green / 8;
-    color->rgbBlue = blue / 8;
-    color->rgbRed = red / 8;
+    color->rgbGreen = green / 4;
+    color->rgbBlue = blue / 4;
+    color->rgbRed = red / 4;
 
 }
+
+
+
 int calcularMapeoInversoY(int i, int j) {
     double A = i - j;
     double B = i + j;
@@ -109,8 +141,8 @@ int main(int argc, char** argv) {
     // create the bitmap object
     // allocate a 200x200 pixel image, with 32-bit colour
     
-    int width;
-    int height;
+    //int width;
+    //int height;
 
     FREE_IMAGE_FORMAT formato = FreeImage_GetFileType("sample.png", 0);
     FIBITMAP* bitmap = FreeImage_Load(formato, "sample.png");
@@ -120,8 +152,8 @@ int main(int argc, char** argv) {
     
     FIBITMAP* temp = FreeImage_ConvertTo32Bits(bitmap);
     
-    width = FreeImage_GetWidth(temp);
-    height = FreeImage_GetHeight(temp);
+    Width = FreeImage_GetWidth(temp);
+    Height = FreeImage_GetHeight(temp);
     
     
     FreeImage_Unload(bitmap);
@@ -138,14 +170,14 @@ int main(int argc, char** argv) {
     int x1 =calcularMapeoX(0,0);
     int y1 =calcularMapeoY(0,0);
     
-    int x2 =calcularMapeoX(width,0);
-    int y2 =calcularMapeoY(width,0);
+    int x2 =calcularMapeoX(Width,0);
+    int y2 =calcularMapeoY(Width,0);
     
-    int x3 =calcularMapeoX(0,height);
-    int y3 =calcularMapeoY(0,height);
+    int x3 =calcularMapeoX(0,Height);
+    int y3 =calcularMapeoY(0,Height);
     
-    int x4 =calcularMapeoX(width,height);
-    int y4 =calcularMapeoY(width,height);
+    int x4 =calcularMapeoX(Width,Height);
+    int y4 =calcularMapeoY(Width,Height);
     
     cout << "x1: " << x1 << "\n";
     cout << "y1: " << y1 << "\n";
@@ -162,7 +194,7 @@ int main(int argc, char** argv) {
     //width=x2;
     //height=y3;
     
-    FIBITMAP * new_bitmap = FreeImage_Allocate(width, height, BPP); 
+    FIBITMAP * new_bitmap = FreeImage_Allocate(Width,Height, BPP); 
     /*El tamano de la imagen
     Despues probar las 4 esquinas, mapeo normal y 
     entonces saca cual es el valor en la otra imagen, define el bitmap del tamano resultato.*/
@@ -171,21 +203,27 @@ int main(int argc, char** argv) {
     struct timeval start, end;
     gettimeofday( &start, NULL );
     #pragma omp simd
-    for (int x = 0; x < width; x++) {
-        for (int y = 0; y < height; y++) {
+    for (int x = 0; x < Width; x++) {
+        for (int y = 0; y < Height; y++) {
                        
-            int inew_bitmap= calcularMapeoInversoX(x,(height-y));
-            int jnew_bitmap= calcularMapeoInversoY(x,(height-y));
-            
+            int inew_bitmap= calcularMapeoInversoX(x,(Height-y));
+            int jnew_bitmap= calcularMapeoInversoY(x,(Height-y));
             /*Sacar el mapeo de inverso*/
             
-            if(inew_bitmap<0 | jnew_bitmap<0 | jnew_bitmap>height | inew_bitmap>width ){
+            if(inew_bitmap<0 | jnew_bitmap<0 | jnew_bitmap>Height | inew_bitmap>Width ){
                 FreeImage_SetPixelColor(new_bitmap, x, y, &negro);
             }
             else{
-            RGBQUAD color;
-            FreeImage_GetPixelColor(bitmap,inew_bitmap,(height-jnew_bitmap),&color);
-            FreeImage_SetPixelColor(new_bitmap, x, y, &color);}
+                RGBQUAD color;
+                FreeImage_GetPixelColor(bitmap,inew_bitmap,(Height-jnew_bitmap),&color);
+                FreeImage_SetPixelColor(new_bitmap, x, y, &color);
+                /*Aplicamos el suavizado*/
+                RGBQUAD color2;
+                if(smoothing(inew_bitmap, Height-jnew_bitmap, &color2, bitmap)==0)
+                    FreeImage_SetPixelColor(new_bitmap, x, y, &color);
+                else 
+                    FreeImage_SetPixelColor(new_bitmap, x, y, &color2);
+            }
         }
     }
      gettimeofday( &end, NULL );
@@ -195,17 +233,17 @@ int main(int argc, char** argv) {
     
     
     
-    /*Proceso de suavizacion*/
+    /*Proceso de suavizacion
     for (int i = 0; i < width; i++) {
         for (int j = 0; j < height; j++) {
-            RGBQUAD color;
-            smoothing(i, j, &color, new_bitmap);
-            FreeImage_SetPixelColor(new_bitmap, i, j, &color);
+            RGBQUAD color2;
+            smoothing(i, j, &color2, bitmap);
+            FreeImage_SetPixelColor(new_bitmap, i, j, &color2);
         }
-    }
+    }*/
 
     // save it as output.bmp
-    FreeImage_Save(FIF_BMP, new_bitmap, "output.bmp");
+    FreeImage_Save(FIF_BMP, new_bitmap, "output4.bmp");
 
     // deallocate memory
     FreeImage_Unload(bitmap);
