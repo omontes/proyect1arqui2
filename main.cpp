@@ -22,6 +22,12 @@ using namespace std;
 int Width; 
 int Height;
 
+/*
+ * Cuando se realiza el suavizado, si el promedio del color es negro 
+ * no va a funcionar de la mejor manera, por lo que si el promedio de
+ * las posiciones colindantes es negro, lo indica retornando un 0, sino
+ * retorna un 1.
+ */
 int esNegro(RGBQUAD* color){
     if(color->rgbBlue == 0 && color->rgbGreen == 0 && color->rgbRed == 0){
         return 0;
@@ -30,15 +36,18 @@ int esNegro(RGBQUAD* color){
 }
 
 
-
 /*
- * 
+ * Funcion para realizar el suavizado de la imágen, tomando en cuenta el 
+ * valor de cada uno de los pixeles colindantes, se realiza un promedio y 
+ * el resultado es el color que va en la imágen mapeada. 
  */
 int smoothing(int i, int j, RGBQUAD* color, FIBITMAP* bitmap) {
     
     RGBQUAD color1;
     FreeImage_GetPixelColor(bitmap, i + 1, j, &color1);
+    /*Verificamos que no sea negro*/
     if(esNegro(&color1)==0) return 0;
+    /*Verificamos no tomar pixeles fuera de la imagen*/
     if(i+1<0 | j<0 | j>Height | i+1>Width )
         return 0;
            
@@ -83,6 +92,7 @@ int smoothing(int i, int j, RGBQUAD* color, FIBITMAP* bitmap) {
     int blue = color1.rgbBlue + color2.rgbBlue + color3.rgbBlue + color4.rgbBlue;
     //+ color5.rgbBlue + color6.rgbBlue + color7.rgbBlue + color8.rgbBlue;
 
+    /*Realizamos el promedio*/
     color->rgbGreen = green / 4;
     color->rgbBlue = blue / 4;
     color->rgbRed = red / 4;
@@ -90,7 +100,9 @@ int smoothing(int i, int j, RGBQUAD* color, FIBITMAP* bitmap) {
 }
 
 
-
+/*
+ * Con esta función se obtiene la componente imaginaria del mapeo inverso
+ */
 int calcularMapeoInversoY(int i, int j) {
     double A = i - j;
     double B = i + j;
@@ -98,10 +110,11 @@ int calcularMapeoInversoY(int i, int j) {
     double E = 2.1 - 0.003 * j;
     double divisor = pow(D, 2) + pow(E, 2);
     return ((B * D)-(A * E)) / divisor;
-
-
 }
 
+/*
+ * Con esta función se obtiene la componente real del mapeo inverso 
+ */
 int calcularMapeoInversoX(int i, int j) {
     double A = i - j;
     double B = i + j;
@@ -109,10 +122,11 @@ int calcularMapeoInversoX(int i, int j) {
     double E = 2.1 - 0.003 * j;
     double divisor = pow(D, 2) + pow(E, 2);
     return ((A * D)+(B * E)) / divisor;
-    
-
-
 }
+
+/*
+ * Con esta funcion se obtiene la componente real del mapeo bilineal 
+ */
 int calcularMapeoX(int i, int j){
     double A = 2.1*i-2.1*j;
     double B = 2.1*i+2.1*j;
@@ -123,6 +137,10 @@ int calcularMapeoX(int i, int j){
   
 
 }
+
+/*
+ * Con esta función se obtiene la componente imaginaria del mapeo bilineal
+ */
 int calcularMapeoY(int i, int j){
     double A = 2.1*i-2.1*j;
     double B = 2.1*i+2.1*j;
@@ -130,42 +148,40 @@ int calcularMapeoY(int i, int j){
     double E = 0.003*j+1;
     double C = pow((0.003*i+1),2)+pow((0.003*j+1),2);
     return (-A*E+B*D)/C;
-
 }
-int main(int argc, char** argv) {
 
+/*
+ * Funcion principal donde se realiza la carga de la imagen y se le 
+ * aplica el mapeo. 
+ * Se aplica el mapeo inverso, es decri se inicia desde la imagen que
+ * se deberia obtener. Se calcula el mapeo inverso, para tomar el pixel 
+ * de la imagen origianl y colocarlo en la imagen nueva o mapeada. Al 
+ * mismo tiempo tenemos el suavizado de la imagen pixel por pixel. 
+ * Ademas, se aplican los pragmas de OpenMP, para "vectorizar" el codigo.
+ */
+int main(int argc, char** argv) {
+    /*inicializamos FreeImage*/
     FreeImage_Initialise();
     atexit(FreeImage_DeInitialise);
     cout << "FreeImage: " << FreeImage_GetVersion() << "\n";
-    
-    // create the bitmap object
-    // allocate a 200x200 pixel image, with 32-bit colour
-    
-    //int width;
-    //int height;
-
+    /*Obtenemos la imagen de muestra, y la convertimos a un mapa de bits*/    
     FREE_IMAGE_FORMAT formato = FreeImage_GetFileType("sample.png", 0);
     FIBITMAP* bitmap = FreeImage_Load(formato, "sample.png");
-    
-   
-    
-    
     FIBITMAP* temp = FreeImage_ConvertTo32Bits(bitmap);
-    
+    /*Obtenemos el ancho y el largo de la imagen*/
     Width = FreeImage_GetWidth(temp);
     Height = FreeImage_GetHeight(temp);
-    
-    
+    /*Como la imagen se guarda en un temporal, dejamos de cargar la imagen*/    
     FreeImage_Unload(bitmap);
     bitmap = temp;
-    
+    /*Definimos el color negro para el mapeo*/
     RGBQUAD negro;
     negro.rgbBlue = 0;
     negro.rgbRed = 0;
     negro.rgbGreen = 0;
     
     /*
-     * Mapea 0, tmaano en x j y lo mapea y luego mapea oarte ral en 
+     * Hacemos el calculo del mapeo  
      */
     int x1 =calcularMapeoX(0,0);
     int y1 =calcularMapeoY(0,0);
@@ -191,9 +207,7 @@ int main(int argc, char** argv) {
     cout << "x4: " << x4 << "\n";
     cout << "y4: " << y4 << "\n";
     
-    //width=x2;
-    //height=y3;
-    
+    /*Nuevo bitmap para colocar la imagen mapeada*/
     FIBITMAP * new_bitmap = FreeImage_Allocate(Width,Height, BPP); 
     /*El tamano de la imagen
     Despues probar las 4 esquinas, mapeo normal y 
@@ -202,50 +216,42 @@ int main(int argc, char** argv) {
     double seconds;
     struct timeval start, end;
     gettimeofday( &start, NULL );
+    /*Directivas de OpenMP*/
     #pragma omp simd
     for (int x = 0; x < Width; x++) {
         for (int y = 0; y < Height; y++) {
-                       
+            /*Obtenemos el tamaño de la imagen mapeada*/
             int inew_bitmap= calcularMapeoInversoX(x,(Height-y));
             int jnew_bitmap= calcularMapeoInversoY(x,(Height-y));
             /*Sacar el mapeo de inverso*/
-            
+            /*Si una posicion se sale del tamaño de la original colocar el color
+             negro en la imagen mapeada*/
             if(inew_bitmap<0 | jnew_bitmap<0 | jnew_bitmap>Height | inew_bitmap>Width ){
                 FreeImage_SetPixelColor(new_bitmap, x, y, &negro);
             }
-            else{
+            else{/*Aquí vamos colocando pixel por pixel en la imagen mapeada*/
                 RGBQUAD color;
                 FreeImage_GetPixelColor(bitmap,inew_bitmap,(Height-jnew_bitmap),&color);
                 FreeImage_SetPixelColor(new_bitmap, x, y, &color);
                 /*Aplicamos el suavizado*/
-                RGBQUAD color2;
+                RGBQUAD color2;/*si algun punto del suavizado dentro de la iamgen
+                                nos da negro, lo descartamos por que le resta
+                                nitidez a la imagen.*/
                 if(smoothing(inew_bitmap, Height-jnew_bitmap, &color2, bitmap)==0)
                     FreeImage_SetPixelColor(new_bitmap, x, y, &color);
-                else 
+                else /*sino le aplicamos el suavizado resultante*/
                     FreeImage_SetPixelColor(new_bitmap, x, y, &color2);
             }
         }
-    }
+    }/*Mostramos el tiempo tardado en realizar la operacion */
      gettimeofday( &end, NULL );
      seconds = (end.tv_sec - start.tv_sec) + 1.0e-6 * (end.tv_usec - start.tv_usec);
      cout << "El mapeo duro en segundos: " << seconds << "\n";
-     
-    
-    
-    
-    /*Proceso de suavizacion
-    for (int i = 0; i < width; i++) {
-        for (int j = 0; j < height; j++) {
-            RGBQUAD color2;
-            smoothing(i, j, &color2, bitmap);
-            FreeImage_SetPixelColor(new_bitmap, i, j, &color2);
-        }
-    }*/
 
-    // save it as output.bmp
+    /*Imagen de salida*/
     FreeImage_Save(FIF_BMP, new_bitmap, "output4.bmp");
 
-    // deallocate memory
+    /*Liberamos la memoria*/
     FreeImage_Unload(bitmap);
     return 0;
 }

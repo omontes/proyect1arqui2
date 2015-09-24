@@ -24,7 +24,7 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 
 
 # Project Name
-PROJECTNAME=proyectoArqui
+PROJECTNAME=proyect1arqui2
 
 # Active Configuration
 DEFAULTCONF=Debug
