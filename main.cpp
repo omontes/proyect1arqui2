@@ -12,6 +12,7 @@
 #include <omp.h>
 #include <time.h>
 #include <sys/time.h>
+#include <string.h>
 using namespace std;
 
 #define WIDTH 512
@@ -160,13 +161,32 @@ int calcularMapeoY(int i, int j){
  * Ademas, se aplican los pragmas de OpenMP, para "vectorizar" el codigo.
  */
 int main(int argc, char** argv) {
+    
+    int parameterCount;
+    char* rutaArchivo;
     /*inicializamos FreeImage*/
     FreeImage_Initialise();
     atexit(FreeImage_DeInitialise);
-    cout << "FreeImage: " << FreeImage_GetVersion() << "\n";
+    //cout << "FreeImage: " << FreeImage_GetVersion() << "\n";
     /*Obtenemos la imagen de muestra, y la convertimos a un mapa de bits*/    
-    FREE_IMAGE_FORMAT formato = FreeImage_GetFileType("sample.png", 0);
-    FIBITMAP* bitmap = FreeImage_Load(formato, "sample.png");
+    FREE_IMAGE_FORMAT formato;
+    FIBITMAP* bitmap;
+    
+    for (parameterCount = 1; parameterCount < argc; parameterCount++)
+	{
+                //Para leer el archivo
+		if (strcmp(argv[parameterCount], "-f") == 0)
+		{
+			// Indicate that we want to jump over the next parameter
+			parameterCount++;
+			//cout << "Se agrega el archivo: " << (char*)argv[parameterCount] << "\n";
+			rutaArchivo = (char*) argv[parameterCount];
+                        formato = FreeImage_GetFileType(rutaArchivo, 0);
+                        bitmap = FreeImage_Load(formato, rutaArchivo);
+                }
+    }
+      
+    
     FIBITMAP* temp = FreeImage_ConvertTo32Bits(bitmap);
     /*Obtenemos el ancho y el largo de la imagen*/
     Width = FreeImage_GetWidth(temp);
@@ -195,7 +215,7 @@ int main(int argc, char** argv) {
     int x4 =calcularMapeoX(Width,Height);
     int y4 =calcularMapeoY(Width,Height);
     
-    cout << "x1: " << x1 << "\n";
+    /*cout << "x1: " << x1 << "\n";
     cout << "y1: " << y1 << "\n";
     
     cout << "x2: " << x2 << "\n";
@@ -205,7 +225,7 @@ int main(int argc, char** argv) {
     cout << "y3: " << y3 << "\n";
     
     cout << "x4: " << x4 << "\n";
-    cout << "y4: " << y4 << "\n";
+    cout << "y4: " << y4 << "\n";*/
     
     /*Nuevo bitmap para colocar la imagen mapeada*/
     FIBITMAP * new_bitmap = FreeImage_Allocate(Width,Height, BPP); 
@@ -246,7 +266,7 @@ int main(int argc, char** argv) {
     }/*Mostramos el tiempo tardado en realizar la operacion */
      gettimeofday( &end, NULL );
      seconds = (end.tv_sec - start.tv_sec) + 1.0e-6 * (end.tv_usec - start.tv_usec);
-     cout << "El mapeo duro en segundos: " << seconds << "\n";
+     cout << seconds << "\n";
 
     /*Imagen de salida*/
     FreeImage_Save(FIF_BMP, new_bitmap, "output4.bmp");
