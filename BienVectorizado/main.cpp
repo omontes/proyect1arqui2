@@ -7,6 +7,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <cmath>
+#define dimension 4
 using namespace std;
 
 #define BPP 32 //Bits per pixel 
@@ -84,9 +85,10 @@ int suavizado2(int ***entrada, int iTemp, int jTemp, int k, int h, int w, int t)
 }
 
 void calcularMapeo(int ***salida, int ***entrada, int width, int height, int depth) {
-
-    for (int i = 0; i < width; i++) {
-        for (int j = 0; j < height; j++) {
+    int i,j,k;
+    #pragma omp parallel private(i,j,k) shared(salida,entrada)
+    for (i = 0; i < width; i++) {
+        for (j = 0; j < height; j++) {
 
             int newi = calcularMapeoInversoX(i, height - j);
             int newj = calcularMapeoInversoY(i, height - j);
@@ -104,7 +106,7 @@ void calcularMapeo(int ***salida, int ***entrada, int width, int height, int dep
             newj = newi == 0 ? 0 : newj;
             newi = newj == 0 ? 0 : newi;
 
-            for (int k = 0; k < depth; k++) {
+            for (k = 0; k < depth; k++) {
                 //int x = entrada[newi][height - 1 - newj][k]; // normal          
                 //salida[i][j][k] = x;
                  
@@ -240,6 +242,16 @@ int main(int argc, char** argv) {
     }
     FreeImage_Save(FIF_BMP, bitmap_final, "output.bmp");
     FreeImage_Unload(bitmap_original);
+    
+    
+   
+
+
+   /* #pragma omp parallel for
+    for (int i = 0; i < dimension; i++)
+        for (int j = 0; j < dimension; j++)
+            printf("i=%d, j=%d, thread = %d\n", i, j, omp_get_thread_num());*/
+    
 
 
 
