@@ -105,8 +105,14 @@ void calcularMapeo(int ***salida, int ***entrada, int width, int height, int dep
             newi = newj == 0 ? 0 : newi;
 
             for (int k = 0; k < depth; k++) {
-                int x = entrada[newi][height - 1 - newj][k]; // normal          
+                //int x = entrada[newi][height - 1 - newj][k]; // normal          
+                //salida[i][j][k] = x;
+                 
+                //int z = entrada[newi][height-1-newj][k];
+                int x = entrada[newi][height - 1 - newj][k];
+                //z = (z == 0) ? x : z >> 1;
                 salida[i][j][k] = x;
+                
             }
         }
     }
@@ -197,15 +203,15 @@ int main(int argc, char** argv) {
 
 
 
-    double start_time, run_time;
+    double start_time, tiempo_seg;
     start_time = omp_get_wtime();
 
 
     // generar la matrix de salida
     calcularMapeo(salida, entrada, width, height, 3);
    // suavizado(salida2, salida, width, height, 3);
-    run_time = omp_get_wtime() - start_time;
-    printf("%lf\n", run_time);
+    tiempo_seg = omp_get_wtime() - start_time;
+    cout << tiempo_seg << "\n";
 
     //convertir matrix a bitmap
      FIBITMAP* bitmap_mapeado = FreeImage_Allocate(width, height, BPP);
