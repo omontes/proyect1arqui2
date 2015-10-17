@@ -86,12 +86,19 @@ int suavizado2(int ***entrada, int iTemp, int jTemp, int k, int h, int w, int t)
 
 void calcularMapeo(int ***salida, int ***entrada, int width, int height, int depth) {
     int i,j,k;
-    #pragma omp parallel private(i,j,k) shared(salida,entrada)
+    omp_set_dynamic(0);
+    #pragma omp parallel for private(i,j,k) shared(salida,entrada) num_threads(10)
     for (i = 0; i < width; i++) {
         for (j = 0; j < height; j++) {
+            
+            double A = i - (height - 1 - j);
+            double B = i + (height - 1 - j);
+            double D = 2.1 - 0.003 * i;
+            double E = 2.1 - 0.003 * (height - 1 - j);
+            double divisor = pow(D, 2) + pow(E, 2);
 
-            int newi = calcularMapeoInversoX(i, height - j);
-            int newj = calcularMapeoInversoY(i, height - j);
+            int newi = ((A * D)+(B * E)) / divisor;
+            int newj = ((B * D)-(A * E)) / divisor;
             
             /* if(inew_bitmap<0 | jnew_bitmap<0 | jnew_bitmap>Height | inew_bitmap>Width ){
                 FreeImage_SetPixelColor(new_bitmap, x, y, &negro);
