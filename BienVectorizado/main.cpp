@@ -7,6 +7,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <cmath>
+#include <string.h>
 #define dimension 4
 using namespace std;
 
@@ -62,12 +63,8 @@ int calcularMapeoY(int i, int j) {
     return (-A * E + B * D) / C;
 }
 
-int smooth(int ***entrada, int x, int y, int z) {
-    int newRojo = entrada[x + 1][y][z] + entrada[x - 1][y][z] + entrada[x][y + 1][z] + entrada[x][y - 1][z];
-    return newRojo;
-}
 
-int suavizado2(int ***entrada, int iTemp, int jTemp, int k, int h, int w, int t) {
+int funcSuavizado(int ***entrada, int iTemp, int jTemp, int k, int h, int w, int t) {
 
     jTemp = jTemp == 0 ? 1 : jTemp;
     iTemp = iTemp == 0 ? 1 : iTemp;
@@ -86,11 +83,10 @@ int suavizado2(int ***entrada, int iTemp, int jTemp, int k, int h, int w, int t)
 
 void calcularMapeo(int ***salida, int ***entrada, int width, int height, int depth) {
     int i,j,k;
-    omp_set_dynamic(0);
-    #pragma omp parallel for private(i,j,k) shared(salida,entrada) num_threads(10)
+    //omp_set_dynamic(0);
+    //#pragma omp parallel for private(i,j,k) shared(salida,entrada) num_threads(10)
     for (i = 0; i < width; i++) {
         for (j = 0; j < height; j++) {
-            
             double A = i - (height - 1 - j);
             double B = i + (height - 1 - j);
             double D = 2.1 - 0.003 * i;
@@ -116,7 +112,6 @@ void calcularMapeo(int ***salida, int ***entrada, int width, int height, int dep
             for (k = 0; k < depth; k++) {
                 //int x = entrada[newi][height - 1 - newj][k]; // normal          
                 //salida[i][j][k] = x;
-                 
                 //int z = entrada[newi][height-1-newj][k];
                 int x = entrada[newi][height - 1 - newj][k];
                 //z = (z == 0) ? x : z >> 1;
@@ -143,12 +138,29 @@ void suavizado(int ***salida, int ***entrada, int width, int height, int depth) 
 
 int main(int argc, char** argv) {
 
+    int parameterCount;
+    char* rutaArchivo;
+    
     FreeImage_Initialise();
     atexit(FreeImage_DeInitialise);
 
 
-    FREE_IMAGE_FORMAT formato = FreeImage_GetFileType("sample.png", 0);
-    FIBITMAP* bitmap_original = FreeImage_Load(formato, "sample.png");
+    /*Obtenemos la imagen de muestra, y la convertimos a un mapa de bits*/    
+    FREE_IMAGE_FORMAT formato;
+    FIBITMAP* bitmap_original;
+    
+    for (parameterCount = 1; parameterCount < argc; parameterCount++)
+	{
+                //Para leer el archivo
+		if (strcmp(argv[parameterCount], "-f") == 0)
+		{
+			parameterCount++;
+			//cout << "Se agrega el archivo: " << (char*)argv[parameterCount] << "\n";
+			rutaArchivo = (char*) argv[parameterCount];
+                        formato = FreeImage_GetFileType(rutaArchivo, 0);
+                        bitmap_original = FreeImage_Load(formato, rutaArchivo);
+                }
+    }
 
     FIBITMAP* temp = FreeImage_ConvertTo32Bits(bitmap_original);
     int width = FreeImage_GetWidth(temp);

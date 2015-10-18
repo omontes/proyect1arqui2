@@ -170,7 +170,7 @@ int main(int argc, char** argv) {
     //cout << "FreeImage: " << FreeImage_GetVersion() << "\n";
     /*Obtenemos la imagen de muestra, y la convertimos a un mapa de bits*/    
     FREE_IMAGE_FORMAT formato;
-    FIBITMAP* bitmap;
+    FIBITMAP* bitmap_original;
     
     for (parameterCount = 1; parameterCount < argc; parameterCount++)
 	{
@@ -182,18 +182,18 @@ int main(int argc, char** argv) {
 			//cout << "Se agrega el archivo: " << (char*)argv[parameterCount] << "\n";
 			rutaArchivo = (char*) argv[parameterCount];
                         formato = FreeImage_GetFileType(rutaArchivo, 0);
-                        bitmap = FreeImage_Load(formato, rutaArchivo);
+                        bitmap_original = FreeImage_Load(formato, rutaArchivo);
                 }
     }
       
     
-    FIBITMAP* temp = FreeImage_ConvertTo32Bits(bitmap);
+    FIBITMAP* temp = FreeImage_ConvertTo32Bits(bitmap_original);
     /*Obtenemos el ancho y el largo de la imagen*/
     Width = FreeImage_GetWidth(temp);
     Height = FreeImage_GetHeight(temp);
     /*Como la imagen se guarda en un temporal, dejamos de cargar la imagen*/    
-    FreeImage_Unload(bitmap);
-    bitmap = temp;
+    FreeImage_Unload(bitmap_original);
+    bitmap_original = temp;
     /*Definimos el color negro para el mapeo*/
     RGBQUAD negro;
     negro.rgbBlue = 0;
@@ -251,13 +251,13 @@ int main(int argc, char** argv) {
             }
             else{/*Aquí vamos colocando pixel por pixel en la imagen mapeada*/
                 RGBQUAD color;
-                FreeImage_GetPixelColor(bitmap,inew_bitmap,(Height-jnew_bitmap),&color);
+                FreeImage_GetPixelColor(bitmap_original,inew_bitmap,(Height-jnew_bitmap),&color);
                 FreeImage_SetPixelColor(new_bitmap, x, y, &color);
                 /*Aplicamos el suavizado*/
                 RGBQUAD color2;/*si algun punto del suavizado dentro de la iamgen
                                 nos da negro, lo descartamos por que le resta
                                 nitidez a la imagen.*/
-                if(smoothing(inew_bitmap, Height-jnew_bitmap, &color2, bitmap)==0)
+                if(smoothing(inew_bitmap, Height-jnew_bitmap, &color2, bitmap_original)==0)
                     FreeImage_SetPixelColor(new_bitmap, x, y, &color);
                 else /*sino le aplicamos el suavizado resultante*/
                     FreeImage_SetPixelColor(new_bitmap, x, y, &color2);
@@ -272,7 +272,7 @@ int main(int argc, char** argv) {
     FreeImage_Save(FIF_BMP, new_bitmap, "output4.bmp");
 
     /*Liberamos la memoria*/
-    FreeImage_Unload(bitmap);
+    FreeImage_Unload(bitmap_original);
     return 0;
 }
 
